@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Build artifacts (when running --keep-html for debugging)
+*.html
+!examples/*.html
+!templates/*.html
+
+# Test output
+/test_*.pdf
+/test_*.html
