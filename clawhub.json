@@ -1,7 +1,7 @@
 {
   "name": "md-pdf-report",
   "version": "1.1.0",
-  "description": "Markdown to PDF converter for research reports with native CJK font support. MD is single source of truth, PDF is auto-delivered to chat.",
+  "description": "Convert Markdown research reports into styled multilingual PDFs using installed system fonts. Markdown remains the editable source; chat delivery depends on the agent host.",
   "repository": "https://github.com/0xcjl/md-pdf-report",
   "homepage": "https://github.com/0xcjl/md-pdf-report",
   "author": {
@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "platforms": ["hermes", "claude-code", "openclaw"],
-  "tags": ["pdf", "research", "report", "cjk", "chinese"],
+  "tags": ["pdf", "research", "report", "multilingual", "cjk", "chinese"],
   "skills": ["SKILL.md"],
   "entry": "md2pdf.py"
 }
