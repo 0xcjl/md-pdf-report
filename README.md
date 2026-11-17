@@ -2,12 +2,12 @@
 
 > **English** | **[简体中文](./README.zh-CN.md)**
 
-Convert Markdown research reports into styled PDFs, with auto-delivery to chat.
+Convert Markdown research reports into styled, multilingual PDFs. Chat delivery depends on the agent host.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](md2pdf.py)
 [![weasyprint](https://img.shields.io/badge/engine-weasyprint-purple.svg)](references/pdf-engine-comparison.md)
-[![CJK](https://img.shields.io/badge/CJK-native%20support-red.svg)](references/macos-cjk-fonts.md)
+[![Multilingual](https://img.shields.io/badge/text-multilingual-red.svg)](examples/multilingual-smoke.md)
 [![Skill](https://img.shields.io/badge/Agent-Skill-orange.svg)](./SKILL.md)
 
 ---
@@ -18,7 +18,7 @@ Stops the loop where an AI agent writes a long Markdown report, then can't actua
 
 **md-pdf-report** turns a single `.md` file into:
 
-1. **`.pdf`** — styled, paginated, with native CJK fonts (no garbled boxes)
+1. **`.pdf`** — styled and paginated, using installed fonts for Latin, CJK, Cyrillic, Greek, Arabic, Hebrew, Devanagari, Thai, and other scripts
 2. **Both files sent to your chat** via the `MEDIA:` protocol, so you can download on phone, tablet, or any other device
 
 The Markdown stays editable and the PDF is auto-generated. No content drift between the two.
@@ -39,7 +39,7 @@ python3 md2pdf.py report.md
 | **Source of truth** | Agent has only local `.md` | Single `.md`, PDF derived |
 | **PDF generation** | Manual screenshot, base64 paste, or "file is at `/tmp/x.pdf`" (you can't open it) | One command, both files delivered |
 | **Cross-device** | ❌ Local paths don't work on your phone | ✅ Chat attachment, downloadable anywhere |
-| **Chinese fonts** | Garbled boxes / `libgobject` errors | Native CJK rendering, auto-bootstrap |
+| **Multilingual text** | Missing glyphs or machine-specific font paths | System font fallback; add fonts for scripts your system lacks |
 | **File size** | 5-15 MB if LaTeX path | 2-3 MB/page (weasyprint) |
 | **Style control** | ✍️ ParagraphStyle API hell | Clean CSS, easy to customize |
 
@@ -51,8 +51,8 @@ python3 md2pdf.py report.md
 |----------|-----|-----|
 | Research / fact-check / investigation report | ✅ Perfect | Long-form analysis with tables, sources, callouts |
 | Scheme / plan / technical proposal | ✅ Perfect | Multi-section structure with warnings and notes |
-| Investment memo / on-chain research | ✅ Perfect | Mixed CJK + English, source links |
-| 调研报告 / 方案 / 链上分析 | ✅ Perfect | 原生中文，CJK 字体无需配置 |
+| Investment memo / on-chain research | ✅ Perfect | Mixed-language text, tables, and source links |
+| 调研报告 / 方案 / 链上分析 | ✅ Perfect | 中文与其他语言混排；按系统字体覆盖范围渲染 |
 | Resume / portfolio / one-pager | ❌ Use `kami` | Branded design, single-page layout |
 | Slides / PPT / deck | ❌ Use `kami` | Different output format |
 | Short message / notification | ❌ Don't | Just text is fine |
@@ -104,6 +104,7 @@ Or as a CLI:
 python3 md2pdf.py report.md              # → report.pdf
 python3 md2pdf.py report.md -o out.pdf   # custom output
 python3 md2pdf.py report.md --keep-html  # debug: also save report.html
+python3 md2pdf.py report.md --lang fr   # set the document language when known
 ```
 
 ---
@@ -213,7 +214,7 @@ md_to_pdf("report.md", css=DEFAULT_CSS + """
 
 ### Custom fonts
 
-Edit `md2pdf.py` top-of-file `FONT_BODY` / `FONT_HEADING` / `FONT_KAITI` constants. See `references/macos-cjk-fonts.md` for the verified macOS font paths.
+The default CSS uses installed font families and script fallback, without hard-coded font file paths. Font coverage depends on the host: install a font for any script that renders as boxes. For a preferred typeface, pass custom CSS through `md_to_pdf(..., css=...)`. Use `--lang` for a single-language document; mixed-language documents default to `und` (undetermined). In Markdown, add `<span lang="ar" dir="rtl">...</span>` or similar markup when a passage needs its own language or writing direction. See [the multilingual smoke sample](examples/multilingual-smoke.md). Visual rendering and extracted/searchable text can differ for complex scripts, so inspect the PDF itself.
 
 ---
 
@@ -222,8 +223,8 @@ Edit `md2pdf.py` top-of-file `FONT_BODY` / `FONT_HEADING` / `FONT_KAITI` constan
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `cannot load library 'libgobject-2.0-0'` | pango not installed | `brew install pango` |
-| Garbled Chinese (boxes) | Wrong font path | `find /System/Library/AssetsV2 -name "STXIHEI.ttf"` |
-| `TTFError: postscript outlines are not supported` | Trying to use `.ttc` | Use `.ttf` paths from `references/macos-cjk-fonts.md` |
+| Missing glyphs (boxes) | No installed font covers the script | Install an appropriate system font, then regenerate and inspect the PDF |
+| `TTFError: postscript outlines are not supported` | A custom ReportLab font uses an unsupported `.ttc` | Use a compatible font file; the default WeasyPrint path does not register a font file |
 | PDF > 5 MB | Full fonts embedded | Use `pyftsubset` to subset fonts (advanced) |
 
 Full troubleshooting in `references/weasyprint-bootstrap.md`.

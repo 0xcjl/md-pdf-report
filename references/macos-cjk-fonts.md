@@ -1,9 +1,11 @@
 # macOS CJK Font Reference
 
+> Historical note: the default `md2pdf.py` now uses system font fallback and does not require the file paths below. These paths concern optional custom fonts and the earlier ReportLab investigation. Current WeasyPrint/Pango can use system font collections; do not treat the ReportLab `.ttc` limitation as a WeasyPrint limitation.
+
 ## The Core Problem
 
 macOS's Chinese fonts come in two flavors:
-- **`.ttc`** (TrueType Collection) — multiple fonts in one file. Apple's PingFang.ttc, STHeiti Medium.ttc, and Libian.ttc all use **PostScript outlines** (CFF/Type 2), which `reportlab` and `weasyprint` **cannot load**:
+- **`.ttc`** (TrueType Collection) — multiple fonts in one file. Some ReportLab font registration paths cannot load PostScript outlines (CFF/Type 2):
   ```
   reportlab.pdfbase.ttfonts.TTFError: TTC file "X.ttc": postscript outlines are not supported
   ```
@@ -64,5 +66,5 @@ export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 ```
 
 ### Garbled Chinese in PDF (boxes / question marks)
-**Cause:** Font path points to wrong file, or font isn't loaded.
-**Fix:** Verify the path with `find`, then verify the font loads with the snippet above.
+**Cause:** No installed font covers the characters, or a custom font rule points to an unavailable file.
+**Fix:** Install a font with the needed glyphs and inspect a rendered page. If using custom font-file CSS, verify that file separately.

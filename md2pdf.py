@@ -1,9 +1,9 @@
 """
-md2pdf — Markdown → PDF (CJK-ready, weasyprint)
+md2pdf — Markdown → PDF (multilingual, weasyprint)
 ================================================
 
-Convert a Markdown file to a styled PDF using weasyprint, with macOS-native
-Chinese font support. Markdown is the single source of truth; the same .md
+Convert a Markdown file to a styled PDF using weasyprint and system font
+fallback for multilingual text. Markdown is the single source of truth; the same .md
 file is the editable artifact and the PDF is generated from it.
 
 Usage
@@ -36,6 +36,7 @@ import os
 import sys
 import platform
 import subprocess
+from html import escape
 from pathlib import Path
 from typing import Optional
 
@@ -63,15 +64,6 @@ if not os.environ.get('MD2PDF_NO_BOOTSTRAP'):
     bootstrap_macos()
 
 
-# ============ Font Configuration ============
-# macOS Chinese fonts. Use the .ttf files in Apple's font asset bundles —
-# the .ttc files have PostScript outlines that don't work reliably with
-# weasyprint. (Same constraint as reportlab.)
-FONT_BODY    = '/System/Library/AssetsV2/com_apple_MobileAsset_Font8/10e7a462a671950b802274fad767b566ff8457d1.asset/AssetData/STXIHEI.ttf'
-FONT_HEADING = '/System/Library/AssetsV2/com_apple_MobileAsset_Font8/53fe5be564086fefc7523ccd0a31200acf92e0e5.asset/AssetData/STHEITI.ttf'
-FONT_KAITI   = '/System/Library/AssetsV2/com_apple_MobileAsset_Font8/6331c5916c361af1b83fb8b8b76ef2eece20c8eb.asset/AssetData/Kai.ttf'
-
-
 # ============ CSS Template ============
 DEFAULT_CSS = f"""
 @page {{
@@ -79,37 +71,30 @@ DEFAULT_CSS = f"""
     margin: 2cm 2cm 2cm 2cm;
     @bottom-center {{
         content: counter(page) " / " counter(pages);
-        font-family: 'Body', sans-serif;
+        font-family: Arial, 'Noto Sans', sans-serif;
         font-size: 9pt;
         color: #94A3B8;
     }}
 }}
 
-@font-face {{
-    font-family: 'Body';
-    src: url('file://{FONT_BODY}');
-    font-weight: normal;
-}}
-@font-face {{
-    font-family: 'Headline';
-    src: url('file://{FONT_HEADING}');
-    font-weight: bold;
-}}
-@font-face {{
-    font-family: 'Kaiti';
-    src: url('file://{FONT_KAITI}');
-}}
-
 body {{
-    font-family: 'Body', 'STHeiti', 'Heiti SC', sans-serif;
+    font-family: Arial, 'Noto Sans', 'DejaVu Sans',
+                 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Noto Sans CJK KR',
+                 'Noto Sans Arabic', 'Noto Sans Hebrew',
+                 'Noto Sans Devanagari', 'Noto Sans Thai', 'PingFang SC',
+                 'Microsoft YaHei', 'Hiragino Sans', 'Yu Gothic',
+                 'Apple SD Gothic Neo', 'Malgun Gothic',
+                 'Kohinoor Devanagari', 'Nirmala UI',
+                 'Geeza Pro', 'Thonburi', 'Tahoma',
+                 'Arial Unicode MS', sans-serif;
     font-size: 10.5pt;
     line-height: 1.65;
     color: #1F2937;
-    text-align: justify;
+    text-align: start;
 }}
 
 h1 {{
-    font-family: 'Headline', sans-serif;
+    font-family: inherit;
     color: #0F172A;
     font-size: 22pt;
     text-align: center;
@@ -119,7 +104,7 @@ h1 {{
 h1 + p {{ text-align: center; color: #475569; font-size: 11pt; margin-top: 0; }}
 
 h2 {{
-    font-family: 'Headline', sans-serif;
+    font-family: inherit;
     color: #0F172A;
     font-size: 15pt;
     margin: 20pt 0 10pt 0;
@@ -128,14 +113,14 @@ h2 {{
     font-weight: bold;
 }}
 h3 {{
-    font-family: 'Headline', sans-serif;
+    font-family: inherit;
     color: #1E293B;
     font-size: 12pt;
     margin: 14pt 0 6pt 0;
     font-weight: bold;
 }}
 h4 {{
-    font-family: 'Headline', sans-serif;
+    font-family: inherit;
     color: #334155;
     font-size: 11pt;
     margin: 10pt 0 4pt 0;
@@ -171,7 +156,7 @@ blockquote {{
     padding: 4pt 12pt;
     margin: 8pt 0;
     color: #475569;
-    font-family: 'Kaiti', 'Body', sans-serif;
+    font-family: inherit;
 }}
 
 table {{
@@ -185,7 +170,7 @@ th {{
     color: white;
     padding: 7pt 8pt;
     text-align: left;
-    font-family: 'Headline', sans-serif;
+    font-family: inherit;
     font-weight: bold;
 }}
 td {{
@@ -209,7 +194,7 @@ hr {{
     padding: 10pt 14pt;
     margin: 10pt 0;
     color: #7F1D1D;
-    font-family: 'Kaiti', 'Body', sans-serif;
+    font-family: inherit;
 }}
 .note {{
     background: #F8FAFC;
@@ -232,7 +217,7 @@ hr {{
 
 
 # ============ Markdown → HTML ============
-def md_to_html(md_text: str, css: Optional[str] = None, title: str = "Report") -> str:
+def md_to_html(md_text: str, css: Optional[str] = None, title: str = "Report", lang: str = "und") -> str:
     """Convert Markdown text to a full HTML document with embedded CSS."""
     import markdown
     md = markdown.Markdown(extensions=[
@@ -244,10 +229,10 @@ def md_to_html(md_text: str, css: Optional[str] = None, title: str = "Report") -
     body_html = md.convert(md_text)
     css_str = css or DEFAULT_CSS
     return f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{escape(lang, quote=True)}">
 <head>
     <meta charset="utf-8">
-    <title>{title}</title>
+    <title>{escape(title)}</title>
     <style>{css_str}</style>
 </head>
 <body>
@@ -272,6 +257,7 @@ def md_to_pdf(
     keep_html: bool = False,
     css: Optional[str] = None,
     base_url: Optional[str] = None,
+    lang: str = "und",
 ) -> str:
     """
     Convert a Markdown file to a styled PDF.
@@ -282,6 +268,7 @@ def md_to_pdf(
         keep_html: If True, also save intermediate .html for debugging
         css: Custom CSS to override DEFAULT_CSS
         base_url: Base URL for resolving relative paths in MD (e.g. images)
+        lang: BCP 47 document language; "und" for mixed or unspecified language
 
     Returns:
         Absolute path to the generated PDF
@@ -298,7 +285,7 @@ def md_to_pdf(
     md_text = md_path.read_text(encoding='utf-8')
     title = md_path.stem
 
-    html = md_to_html(md_text, css=css, title=title)
+    html = md_to_html(md_text, css=css, title=title, lang=lang)
     html_to_pdf(html, str(pdf_path))
 
     if keep_html:
@@ -312,7 +299,7 @@ def md_to_pdf(
 def main():
     import argparse
     parser = argparse.ArgumentParser(
-        description="Convert Markdown to a styled PDF (CJK-ready).",
+        description="Convert Markdown to a styled multilingual PDF.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -325,9 +312,11 @@ Examples:
     parser.add_argument('-o', '--output', help='Output PDF path (default: same name .pdf)')
     parser.add_argument('--keep-html', action='store_true',
                         help='Also save intermediate HTML for debugging')
+    parser.add_argument('--lang', default='und',
+                        help='BCP 47 document language (default: und for mixed/unspecified)')
     args = parser.parse_args()
 
-    out = md_to_pdf(args.md_file, args.output, keep_html=args.keep_html)
+    out = md_to_pdf(args.md_file, args.output, keep_html=args.keep_html, lang=args.lang)
     size = Path(out).stat().st_size
     print(f"✓ PDF generated: {out} ({size:,} bytes = {size/1024:.1f} KB)")
 

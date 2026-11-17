@@ -1,6 +1,6 @@
 ---
 name: md-pdf-report
-description: 'Convert Markdown research reports / fact-checks / scheme proposals into styled PDFs with native CJK (Chinese) font support. Markdown is the single source of truth; PDF is generated FROM the Markdown. Triggers on "做个 PDF 报告", "转成 PDF", "调研报告", "fact-check 报告", "方案 PDF", "scheme 报告", "给我 PDF", "PDF 版本", or any long-form analytical content that needs to be both editable (MD) and viewable/shareable (PDF).'
+description: 'Convert Markdown research reports, fact-checks and proposals into styled multilingual PDFs using installed system fonts. Markdown remains the editable source. Use when the user asks for a PDF report, a PDF version, or a shareable PDF of long-form analysis, including mixed-language content.'
 ---
 
 # md-pdf-report · Markdown 双产物报告（PDF + MD）
@@ -150,20 +150,9 @@ MEDIA:/absolute/path/to/report.pdf
 
 ## 关键技术细节
 
-### ⚠️ Pitfall #1: macOS .ttc 字体不可用
+### ⚠️ Pitfall #1: 某种文字没有可用字体
 
-苹果系统 .ttc 字体文件（PingFang.ttc、STHeiti Medium.ttc）用 PostScript outlines，
-**reportlab 和 weasyprint 都无法加载**。
-
-**解决：** 用 `.ttf` 字体文件：
-
-| 字体 | 用途 | 路径 |
-|------|------|------|
-| STXIHEI | 正文 | `…/10e7a462a671950b802274fad767b566ff8457d1…/STXIHEI.ttf` |
-| STHEITI | 标题 | `…/53fe5be564086fefc7523ccd0a31200acf92e0e5…/STHEITI.ttf` |
-| Kai | 注释/引用 | `…/6331c5916c361af1b83fb8b8b76ef2eece20c8eb…/Kai.ttf` |
-
-**完整路径、验证脚本、失败模式**见 `references/macos-cjk-fonts.md`
+默认样式让 WeasyPrint 从系统字体中选择字形，不依赖 macOS 字体文件的固定路径。中文、日文、韩文、拉丁文、西里尔文、希腊文、阿拉伯文、希伯来文、天城文、泰文等能否正常显示，取决于机器上是否有覆盖相应文字的字体。出现方框时安装相应字体，再生成并目视检查 PDF；不要只根据 `pdftotext` 判断复杂文字的视觉效果。单语文档可通过 `--lang` 标记语言，混排文档默认 `und`；局部从右向左的文字可用 HTML `lang`/`dir` 标记。macOS 旧版字体路径研究仅供参考，见 `references/macos-cjk-fonts.md`。
 
 ### ⚠️ Pitfall #2: weasyprint 缺 C 库
 
@@ -481,7 +470,7 @@ md_to_pdf("report.md", css=custom_css)
 
 ## 验证清单（生成 PDF 后必做）
 
-- [ ] 中文渲染正常（不是方块、不是问号）
+- [ ] 文档实际使用的每种文字都渲染正常（没有方框、缺字或错误方向）
 - [ ] 表格不被截断
 - [ ] 代码块/引用样式正确
 - [ ] callout/note/warn 区块显示正确
@@ -492,15 +481,14 @@ md_to_pdf("report.md", css=custom_css)
 **快速验证命令：**
 ```bash
 pdfinfo report.pdf | grep Pages           # 检查页数
-pdftotext report.pdf - | head -50         # 检查中文渲染
+pdftotext report.pdf - | head -50         # 辅助检查文本；复杂文字仍需目视检查 PDF
 ```
 
 ---
 
 ## 维护
 
-- **macOS 系统升级后字体路径可能变** → `find /System/Library/AssetsV2 -name "STXIHEI.ttf"` 重新确认
-- **PDF 突然乱码** → 90% 是字体路径失效，重新 `find`
+- **某种文字突然变成方框** → 检查该机器的字体覆盖范围，安装相应字体并重新生成
 - **导出报 `cannot load library 'libgobject'`** → pango 没装好或 `DYLD_FALLBACK_LIBRARY_PATH` 没设
 - **weasyprint 版本更新** → 关注 changelog
 - **首次跑报 `ModuleNotFoundError: No module named 'markdown'` 或 `'weasyprint'`** → macOS 系统 Python 缺依赖，`pip3 install --user markdown weasyprint`（详细见 Pitfall #5）

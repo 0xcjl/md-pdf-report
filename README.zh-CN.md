@@ -1,8 +1,8 @@
 # md-pdf-report · Markdown 双产物报告
 
-> **English** | **[简体中文](./README.md)** (You are here)
+> **[English](./README.md)** | 简体中文
 
-一份 Markdown 源文件，两个交付物：可编辑的 `.md` + 可分享的 `.pdf`。原生支持中文（CJK）字体。专为 Hermes Agent / Claude Code / OpenClaw 优化。
+一份 Markdown 源文件，两个交付物：可编辑的 `.md` + 可分享的 `.pdf`。默认通过系统字体回退排版多国语言文字；实际覆盖取决于本机已安装字体。适用于 Hermes Agent / Claude Code / OpenClaw 等具备文件工具的环境。
 
 ---
 
@@ -29,7 +29,7 @@ AI Agent 写长文分析（调研 / 事实核查 / 方案 / 对比）的标准�
 |------|------|---------|
 | `report.md` | `report.pdf` + 自动发到对话 | 调研报告、事实核查、方案、投资分析 |
 | 多章节 Markdown | 带 callout/表格/代码块的样式化 PDF | 长文分析（> 1 页 A4） |
-| 中文 / 中英混排 | 原生 CJK 渲染，无方块乱码 | 双语分析内容 |
+| 多语言或混排文字 | 按已安装字体选择字形，生成可分享 PDF | 国际化调研、跨语种事实核查、双语或多语报告 |
 
 **不适用场景**（用其他 skill）：
 - PPT/slides/deck → `kami` skill
@@ -270,7 +270,7 @@ md_to_pdf(
 
 ### 自定义字体
 
-编辑 `md2pdf.py` 顶部的 `FONT_BODY` / `FONT_HEADING` / `FONT_KAITI` 变量，指向你自己的 `.ttf` 文件。macOS 路径参考 `references/macos-cjk-fonts.md`。
+默认样式使用系统字体及文字回退，不依赖固定的 macOS 字体文件路径。若某种文字显示为方框，先安装覆盖该文字的字体，再重新生成并目视检查 PDF。可通过 `md_to_pdf(..., css=...)` 自定义字体；单语文档可用 `--lang fr` 等参数标记文档语言，混排默认是 `und`。阿拉伯语等局部从右向左的段落可在 Markdown 中使用 `<span lang="ar" dir="rtl">...</span>` 标记。示例见 [多语言样本](examples/multilingual-smoke.md)。复杂文字的视觉排版与 PDF 文本提取结果可能不同，应检查最终页面。
 
 ---
 

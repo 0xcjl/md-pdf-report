@@ -1,5 +1,7 @@
 # Design Rationale
 
+> Historical design record: the current default renderer uses system font fallback for multilingual text instead of fixed macOS CJK font files. See `README.md` for current behavior.
+
 Why md-pdf-report exists, why weasyprint, why "MD as single source of truth", why auto-delivery to chat.
 
 ---
